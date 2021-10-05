@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+
+  <style>
+    canvas {
+      display: block;
+      margin: auto;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="pong"></canvas>
+
+  <script>
+    window.onload = function () {
+      const canvas = document.getElementById('pong')
+      const ctx = canvas.getContext('2d')
+
+      canvas.width = 600
+      canvas.height = 400
+
+      const areaH = {
+        width: 600,
+        height: 370
+      }
+
+      const edge = canvas.height - areaH.height
+
+      const playerH = {
+        width: 12,
+        height: 110,
+
+        speedY: 5
+      }
+
+      const player1H = {
+        posX: 0,
+        posY: areaH.height / 2 - playerH.height / 2 + edge,
+
+        width: playerH.width,
+        height: playerH.height,
+
+        speedY: 0
+      }
+
+      const player2H = {
+        posX: canvas.width - playerH.width,
+        posY: areaH.height / 2 - playerH.height / 2 + edge,
+
+        width: playerH.width,
+        height: playerH.height,
+
+        speedY: 0
+      }
+
+      const ballHStart = {
+        width: 40,
+        height: 40,
+
+        posX: canvas.width / 2,
+        posY: areaH.height / 2 + edge
+      }
+
+      const direction = [-5, -4, -3, 3, 4, 5]
+
+      const ballH = {
+        posX: ballHStart.posX,
+        posY: ballHStart.posY,
+
+        speedX: direction[Math.floor(Math.random() * direction.length)],
+        speedY: direction[Math.floor(Math.random() * direction.length)],
+
+        width: ballHStart.width,
+        height: ballHStart.height,
+
+        resetting: false,
+        start: false
+      }
+
+      const button = {
+        width: 53,
+        height: 20,
+
+        posX: 2,
+        posY: 2
+      }
+
+      let count = 3
+
+      function stopBall() {
+        ballH.posX = ballHStart.posX
+        ballH.posY = ballHStart.posY
+
+        ballH.speedX = 0
+        ballH.speedY = 0
+      }
+
+      function timer() {
+        stopBall()
+
+        if (count !== 0) {
+          count--
+        } else {
+          ballH.resetting = false
+
+          count = 3
+
+          ballH.speedX = direction[Math.floor(Math.random() * direction.length)]
+          ballH.speedY = direction[Math.floor(Math.random() * direction.length)]
+        }
+      }
+
+      function collides(obj1, obj2) {
+        return obj1.posX - obj1.height / 2 < obj2.posX + obj2.width &&
+          obj1.posY - obj1.height / 2 < obj2.posY + obj2.height &&
+          obj1.posX + obj1.height / 2 > obj2.posX &&
+          obj1.posY + obj1.height / 2 > obj2.posY
+      }
+
+      function tick() {
+        player1H.posY += player1H.speedY
+        player2H.posY += player2H.speedY
+
+        ballH.posY += ballH.speedY
+        ballH.posX += ballH.speedX
+
+        if (player1H.posY > canvas.height - playerH.height) {
+          player1H.posY = canvas.height - playerH.height
+        } else if (player1H.posY < edge) {
+          player1H.posY = edge
+        }
+
+        if (player2H.posY > canvas.height - playerH.height) {
+          player2H.posY = canvas.height - playerH.height
+        } else if (player2H.posY < edge) {
+          player2H.posY = edge
+        }
+
+        if (ballH.posY < ballHStart.height / 2 + edge) {
+          ballH.posY = ballHStart.height / 2 + edge
+
+          ballH.speedY *= -1
+        } else if (ballH.posY > canvas.height - ballHStart.height / 2) {
+          ballH.posY = canvas.height - ballHStart.height / 2
+
+          ballH.speedY *= -1
+        }
+
+        if (collides(ballH, player2H)) {
+          ballH.posX = canvas.width - ballHStart.width / 2 - playerH.width
+
+          ballH.speedX *= -1
+
+          ballH.speedX *= 1.1
+          ballH.speedX *= 1.1
+        } else if (collides(ballH, player1H)) {
+          ballH.posX = playerH.width + ballHStart.width / 2
+
+          ballH.speedX *= -1
+
+          ballH.speedX *= 1.1
+          ballH.speedX *= 1.1
+        }
+      }
+
+      let point1 = 0
+      let point2 = 0
+
+      function draw() {
+        requestAnimationFrame(draw)
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+        ctx.fillStyle = '#F0EE7E'
+        ctx.fillRect(0, edge, canvas.width, areaH.height)
+
+        ctx.fillStyle = '#09AA57'
+        ctx.fillRect(player1H.posX, player1H.posY, playerH.width, playerH.height)
+
+        ctx.fillStyle = '#191497'
+        ctx.fillRect(player2H.posX, player2H.posY, playerH.width, playerH.height)
+
+        ctx.fillStyle = '#F02137'
+        ctx.beginPath()
+        ctx.arc(ballH.posX, ballH.posY, ballHStart.width / 2, 0, (Math.PI / 180) * 360)
+        ctx.fill()
+
+        ctx.strokeRect(button.posX, button.posY, button.width, button.height)
+
+        ctx.fillStyle = 'black'
+        ctx.font = "14px Verdana"
+        ctx.fillText("старт!", 6.5, 17)
+
+        ctx.fillStyle = 'black'
+        ctx.font = "18px Verdana"
+        ctx.fillText(point1 + ':', canvas.width - 50, 21)
+
+        ctx.fillStyle = 'black'
+        ctx.font = "18px Verdana"
+        ctx.fillText(point2, canvas.width - 30, 21)
+
+        if (ballH.resetting) {
+          ctx.fillStyle = 'black'
+          ctx.font = "22px Verdana"
+          ctx.fillText(count + 1, canvas.width / 2 - 22 / 4, canvas.height / 2 - edge)
+        }
+
+        if (ballH.start) {
+          tick()
+        }
+
+        if (ballH.posX < 0 && point1 < 5 && point2 < 5) {
+          point2++
+        } else if (ballH.posX > canvas.width && point1 < 5 && point2 < 5) {
+          point1++
+        }
+
+        if (point1 === 5 || point2 === 5) {
+          stopBall()
+        }
+
+        if (point1 === 5) {
+          ctx.fillStyle = 'black'
+          ctx.font = "22px Verdana"
+          ctx.fillText('player1 won!', canvas.width / 2 - 60, canvas.height / 2 - edge)
+        } else if (point2 === 5) {
+          ctx.fillStyle = 'black'
+          ctx.font = "22px Verdana"
+          ctx.fillText('player2 won!', canvas.width / 2 - 60, canvas.height / 2 - edge)
+        }
+
+        if (ballH.posX < 0 || ballH.posX > canvas.width && !ballH.resetting && point1 < 5 && point2 < 5) {
+          ballH.resetting = true
+
+          timer()
+
+          let timerId = setInterval(timer, 1000)
+
+          setTimeout(() => clearInterval(timerId), 3000)
+        }
+      }
+
+      canvas.addEventListener('click', function (e) {
+        if (e.offsetX >= button.posX &&
+          e.offsetX <= button.width + button.posX &&
+          e.offsetY >= button.posY &&
+          e.offsetY <= button.height + button.posY && !ballH.resetting) {
+          ballH.posX = ballHStart.posX
+          ballH.posY = ballHStart.posY
+
+          ballH.speedX = direction[Math.floor(Math.random() * direction.length)]
+          ballH.speedY = direction[Math.floor(Math.random() * direction.length)]
+
+          ballH.start = true
+
+          point1 = 0
+          point2 = 0
+        }
+      })
+
+      document.addEventListener('keydown', function (e) {
+        if (e.keyCode === 38) {
+          player2H.speedY = -playerH.speedY
+        } else if (e.keyCode === 40) {
+          player2H.speedY = playerH.speedY
+        }
+
+        if (e.keyCode === 16) {
+          player1H.speedY = -playerH.speedY
+        } else if (e.keyCode === 17) {
+          player1H.speedY = playerH.speedY
+        }
+      })
+
+      document.addEventListener('keyup', function (e) {
+        if (e.keyCode === 38 || e.keyCode === 40) {
+          player2H.speedY = 0
+        }
+
+        if (e.keyCode === 16 || e.keyCode === 17) {
+          player1H.speedY = 0
+        }
+      })
+
+      requestAnimationFrame(draw)
+    }
+  </script>
+</body>
+
+</html>
